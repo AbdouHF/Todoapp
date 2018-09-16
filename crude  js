@@ -1,0 +1,59 @@
+const express = require("express");
+const bodyparser = require("body-parser")
+const mongodb = require("mongodb").MongoClient
+const app = express();
+const ObjectID = require('mongodb').ObjectID;
+
+const connection = (closure) => {
+    mongodb.connect("mongodb://localhost:27017/erp", { useNewUrlParser: true }, (err, client) => {
+        if (err) throw err;
+        let db = client.db("erp");
+        closure(db);
+    })
+}
+
+app.use(bodyparser.json())
+
+app.get("/", (req, res) => {
+    res.send("hello")
+})
+
+app.get("/clients", (req, res) => {
+    connection(async (db) => {
+        const result = await db.collection('client').find().toArray();
+        res.send(result);
+    })
+})
+//insert
+app.post("/clients",(req,res)=>{
+    connection( async(db)=> {
+        const result = await db.collection('client').insert(req.body);
+        res.send(result);
+    })
+})
+//update
+app.get("/clientsup/:id",(req,res)=>{
+    connection( async(db)=> {
+        const result = db.collection('client').updateOne(
+            {"_id" : ObjectID("5b9ab0fd9e8e057f97cc4c50")},
+            {$set : {"nom" : "HAF"}}
+         );
+        res.send(result);
+    })
+})
+//search ID
+app.get("/clientssearch/:id", (req, res) => {
+    connection(async (db) => {
+        const result = await db.collection('client').findOne({_id:ObjectID(req.params.id)});
+        res.send(result);
+    })
+})
+//delete
+app.get("/clientsremove/:id", (req, res) => {
+    connection(async (db) => {
+        const result = await db.collection('client').deleteOne({_id:ObjectID(req.params.id)});
+        res.send(result);
+    })
+})
+
+app.listen(3000)
